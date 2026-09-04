@@ -83,6 +83,11 @@ docs(readme): adiciona instruções de compilação
 test(dfs): adiciona grafo-brinquedo com ciclo conhecido
 ```
 
+## Gestão do backlog
+
+- Configuração do GitHub Project, campos customizados e priorização da Fase I:
+  [`docs/project-backlog-fase-i.md`](docs/project-backlog-fase-i.md)
+
 ## Status
 
 ### Fase I
