@@ -14,13 +14,13 @@ utilizando algoritmos clássicos de teoria dos grafos.
 
 ## Integrantes
 
-| Nome | GitHub |
+| Nome | Matrícula |
 |------|--------|
-| NOME | @GITHUB |
-| NOME | @GITHUB |
-| NOME | @GITHUB |
-| NOME | @GITHUB |
-| NOME | @GITHUB |
+| Eduardo Lima dos Santos | 2412130074 |
+| Alessandro Ribeiro Moreira | 2412130120 |
+| Alanna Tomaz | 2412130055 |
+| Thaynara Ramos | 2312130186 |
+| Heitor dos Santos Ribeiro | 2412130143 |
 
 ## Requisitos do ambiente
 
