@@ -1,5 +1,7 @@
 # Detecção de Fraudes Financeiras em Grafos
 
+**Tema sorteado:** Detecção de Fraudes Financeiras em Grafos.
+
 Projeto Integrador do IESB que modela transações financeiras como um **grafo
 dirigido**, onde cada **vértice** representa uma conta bancária e cada
 **aresta** representa uma transação direcionada entre contas. O objetivo é
