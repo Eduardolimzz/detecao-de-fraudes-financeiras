@@ -8,6 +8,7 @@ build/*
 # Dataset (não versionado)
 data/*.csv
 data/*.zip
+data/*.txt
 
 # LaTeX
 *.aux
@@ -22,6 +23,7 @@ data/*.zip
 
 # Editor / IDE
 .vscode/
+.venv/
 
 # Sistema
 .DS_Store

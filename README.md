@@ -67,8 +67,48 @@ Utilizamos o dataset **IBM Transactions for Anti-Money Laundering (AML)**,
 disponível no Kaggle:
 <https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml>
 
-O dataset **não é versionado** neste repositório (ver `.gitignore`). Baixe os
-arquivos manualmente e coloque-os em `data/`.
+O dataset **não é versionado** neste repositório (ver `.gitignore`). Os arquivos
+podem ser baixados manualmente pelo Kaggle e colocados em `data/`. Como
+alternativa, o script abaixo automatiza esse download:
+
+```bash
+./scripts/download_dataset.sh
+```
+
+O script opcional baixa somente os arquivos usados na Fase I:
+
+- `HI-Small_Trans.csv`: transações direcionadas do dataset;
+- `HI-Small_Patterns.txt`: padrões associados às transações.
+
+### Configuração do Kaggle CLI
+
+1. Crie ou acesse uma conta no [Kaggle](https://www.kaggle.com/).
+2. Em **Settings > API**, crie um novo token e salve o arquivo `kaggle.json`.
+3. No Linux, coloque o arquivo no diretório padrão e restrinja suas permissões:
+
+   ```bash
+   mkdir -p ~/.config/kaggle
+   mv ~/Downloads/kaggle.json ~/.config/kaggle/
+   chmod 600 ~/.config/kaggle/kaggle.json
+   ```
+
+   Se sua instalação do Kaggle CLI utilizar o diretório legado, coloque o
+   arquivo em `~/.kaggle/kaggle.json`.
+4. Instale e valide o CLI:
+
+   ```bash
+   python3 -m pip install --upgrade kaggle
+   kaggle --version
+   ```
+
+O script usa o identificador `ealtman2019/ibm-transactions-for-anti-money-
+laundering-aml` e a opção `--unzip` para extrair cada arquivo diretamente em
+`data/`. A execução pode baixar centenas de megabytes e exige conectividade e
+credenciais válidas no Kaggle; ela não é executada automaticamente durante a
+configuração do projeto.
+
+Os arquivos em `data/` são dados locais e estão explicitamente ignorados pelo
+Git (`*.csv`, `*.zip` e `*.txt`).
 
 ## Convenção de commits
 
