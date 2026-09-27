@@ -12,7 +12,12 @@ DEPS = $(OBJS:.o=.d)
 
 TARGET = $(BUILD_DIR)/grafos
 
-.PHONY: all debug clean run
+TEST_DIR = tests
+TEST_TARGET = $(BUILD_DIR)/test_csv_parser
+TEST_SRCS = $(TEST_DIR)/test_csv_parser.c $(SRC_DIR)/csv_parser.c
+TEST_OBJS = $(BUILD_DIR)/test_csv_parser.o $(BUILD_DIR)/csv_parser.o
+
+.PHONY: all debug clean run test
 
 all: CFLAGS += -MMD -MP
 all: $(TARGET)
@@ -21,6 +26,9 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILD_DIR)/test_csv_parser.o: $(TEST_DIR)/test_csv_parser.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILD_DIR):
@@ -33,6 +41,11 @@ debug: clean $(TARGET)
 
 run: all
 	./$(TARGET)
+
+test: CFLAGS += -MMD -MP
+test: $(TEST_OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(TEST_TARGET) $(TEST_OBJS)
+	./$(TEST_TARGET)
 
 clean:
 	rm -rf $(BUILD_DIR)

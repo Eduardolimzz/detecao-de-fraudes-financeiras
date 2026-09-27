@@ -1,0 +1,10 @@
+id,nome,valor,categoria
+1,Joao,100.50,alimentacao
+2,Maria,200.00,transporte
+3,"Silva, Pedro",300.75,lazer
+4,Ana,150.00,saude
+5,Carlos,50.25,alimentacao
+6,Bruna,400.00,transporte
+7,campo_extra,10,20,30
+8,Rafael,75.00,lazer
+9,Fernanda,90.00,saude
