@@ -6,7 +6,7 @@
 
 ## Contexto
 
-O projeto modela as transações do arquivo `HI-Small_Trans.csv` como um grafo
+O projeto modela as transações do arquivo `dataset.csv` como um grafo
 para investigar estruturas relacionadas a possíveis fraudes financeiras. O
 arquivo possui, entre outras, as colunas `From Bank`, `Account`, `To Bank`,
 `Account`, `Amount Received`, `Receiving Currency`, `Amount Paid`, `Payment
@@ -102,9 +102,9 @@ Posteriormente, ela poderá ser usada para validação dos resultados,
 comparação com o *ground truth* e análise experimental. Essa separação evita
 misturar o rótulo com a descoberta da estrutura do grafo.
 
-### Arquivo `HI-Small_Patterns.txt`
+### Arquivo `padroes_lavagem.txt`
 
-O arquivo `HI-Small_Patterns.txt` será mantido como referência auxiliar para
+O arquivo `padroes_lavagem.txt` será mantido como referência auxiliar para
 validar ciclos ou padrões encontrados. Ele não fará parte da construção
 inicial do grafo e não definirá vértices nem arestas.
 
@@ -136,7 +136,7 @@ individuais.
   será útil principalmente para experimentos controlados e comparação de
   desempenho.
 - A construção do grafo permanecerá independente de `Is Laundering`, de
-  `HI-Small_Patterns.txt` e dos valores financeiros, reduzindo risco de
+  `padroes_lavagem.txt` e dos valores financeiros, reduzindo risco de
   vazamento do rótulo para a topologia.
 - A preservação de metadados aumenta o espaço necessário, mas mantém a
   possibilidade de auditoria e de uso nas análises da Fase II.

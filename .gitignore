@@ -1,3 +1,6 @@
+# Dataset completo (fonte local, nunca versionado — usar data/dataset.csv)
+data/HI-Small_Trans.csv
+
 # Build
 build/*
 !build/.gitkeep

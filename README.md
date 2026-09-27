@@ -52,7 +52,7 @@ O binário gerado fica em `build/grafos`.
 ```
 src/        # código-fonte .c
 include/    # headers .h
-data/       # datasets (não versionado, ver seção "Dataset")
+data/       # dataset definitivo, versionado (ver seção "Dataset")
 scripts/    # scripts auxiliares (shell/python)
 docs/       # ADRs, relatórios e documentação do processo
 results/    # logs de benchmark e gráficos gerados
@@ -63,52 +63,21 @@ build/      # objetos e binário compilados (não versionado)
 
 ## Dataset
 
-Utilizamos o dataset **IBM Transactions for Anti-Money Laundering (AML)**,
-disponível no Kaggle:
+Utilizamos um subconjunto do dataset **IBM Transactions for Anti-Money
+Laundering (AML)**, cuja fonte original está no Kaggle:
 <https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml>
 
-O dataset **não é versionado** neste repositório (ver `.gitignore`). Os arquivos
-podem ser baixados manualmente pelo Kaggle e colocados em `data/`. Como
-alternativa, o script abaixo automatiza esse download:
+O dataset **já vem versionado neste repositório** — não é necessário baixar
+nada nem configurar credenciais do Kaggle. Os arquivos definitivos são:
 
-```bash
-./scripts/download_dataset.sh
-```
+- `data/dataset.csv`: subconjunto de 20.000 transações (32.386 contas/vértices
+  distintos), atendendo ao RF01;
+- `data/padroes_lavagem.txt`: padrões de lavagem rotulados, usados como
+  gabarito de validação na Fase I.
 
-O script opcional baixa somente os arquivos usados na Fase I:
-
-- `HI-Small_Trans.csv`: transações direcionadas do dataset;
-- `HI-Small_Patterns.txt`: padrões associados às transações.
-
-### Configuração do Kaggle CLI
-
-1. Crie ou acesse uma conta no [Kaggle](https://www.kaggle.com/).
-2. Em **Settings > API**, crie um novo token e salve o arquivo `kaggle.json`.
-3. No Linux, coloque o arquivo no diretório padrão e restrinja suas permissões:
-
-   ```bash
-   mkdir -p ~/.config/kaggle
-   mv ~/Downloads/kaggle.json ~/.config/kaggle/
-   chmod 600 ~/.config/kaggle/kaggle.json
-   ```
-
-   Se sua instalação do Kaggle CLI utilizar o diretório legado, coloque o
-   arquivo em `~/.kaggle/kaggle.json`.
-4. Instale e valide o CLI:
-
-   ```bash
-   python3 -m pip install --upgrade kaggle
-   kaggle --version
-   ```
-
-O script usa o identificador `ealtman2019/ibm-transactions-for-anti-money-
-laundering-aml` e a opção `--unzip` para extrair cada arquivo diretamente em
-`data/`. A execução pode baixar centenas de megabytes e exige conectividade e
-credenciais válidas no Kaggle; ela não é executada automaticamente durante a
-configuração do projeto.
-
-Os arquivos em `data/` são dados locais e estão explicitamente ignorados pelo
-Git (`*.csv`, `*.zip` e `*.txt`).
+Mais detalhes sobre schema, estatísticas e a decisão de fixar esse
+subconjunto estão em [docs/dataset.md](docs/dataset.md) e
+[docs/adr/0002-fixacao-do-dataset.md](docs/adr/0002-fixacao-do-dataset.md).
 
 ## Convenção de commits
 
