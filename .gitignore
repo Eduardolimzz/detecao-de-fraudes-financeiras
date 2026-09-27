@@ -5,11 +5,6 @@ build/*
 *.out
 *.d
 
-# Dataset (não versionado)
-data/*.csv
-data/*.zip
-data/*.txt
-
 # LaTeX
 *.aux
 *.log
