@@ -1,7 +1,7 @@
 #include "representacao.h"
-
 #include "grafo.h"
 #include "matriz_grafo.h"
+#include "mem_track.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -38,7 +38,7 @@ RepGrafo *rep_criar(TipoRepr tipo, int num_vertices) {
         return NULL;
     }
 
-    RepGrafo *g = calloc(1, sizeof(RepGrafo));
+    RepGrafo *g = mem_calloc(1, sizeof(RepGrafo));
     if (g == NULL) {
         return NULL;
     }
@@ -56,7 +56,7 @@ RepGrafo *rep_criar(TipoRepr tipo, int num_vertices) {
     }
 
     if (g->lista == NULL && g->matriz == NULL) {
-        free(g);
+        mem_free(g);
         return NULL;
     }
     return g;
@@ -159,5 +159,5 @@ void rep_liberar(RepGrafo *g) {
     }
     grafo_liberar(g->lista);
     matriz_grafo_liberar(g->matriz);
-    free(g);
+    mem_free(g);
 }
