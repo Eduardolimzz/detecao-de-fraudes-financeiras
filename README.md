@@ -80,6 +80,28 @@ Diferenças que valem lembrar nos experimentos:
   Percorrer os vizinhos de um vértice custa O(V) em vez de O(grau).
 - `rep_num_arestas` conta as transações inseridas, igual nas duas.
 
+## Carga do dataset e log de execução
+
+Um único comando carrega o CSV completo, constrói o grafo na representação
+escolhida e imprime o sumário (|V|, |E|, tempo de carga e memória):
+
+```bash
+./build/grafos                                  # data/dataset.csv, lista
+./build/grafos --repr=matriz                    # mesma carga, em matriz
+./build/grafos --dataset=outro.csv              # outro arquivo
+```
+
+Resultado esperado com o dataset oficial: **32.386 vértices e 20.000
+arestas**. Cada conta é o vértice `banco:conta` (ADR 0001); a coluna
+`Is Laundering` não é usada na construção.
+
+A cada execução uma linha é acrescentada em `results/log_execucao.csv`
+(`timestamp, algoritmo, representacao, n_vertices, n_arestas, tempo_ms,
+memoria_kb`). `memoria_kb` é o pico de RSS do processo. O contador autoral
+de bytes alocados (`mem_*`) é impresso no sumário e é o número a comparar
+entre lista e matriz: o RSS subestima a matriz, pois o sistema operacional
+só materializa as páginas que foram tocadas.
+
 ## Estrutura de diretórios
 
 ```
@@ -129,7 +151,7 @@ test(dfs): adiciona grafo-brinquedo com ciclo conhecido
 
 ### Fase I
 - [ ] Estrutura de lista de adjacência autoral
-- [ ] Leitura e parsing do dataset
+- [x] Leitura e parsing do dataset
 - [ ] Implementação de DFS
 - [ ] Detecção de ciclos
 - [ ] Validação com grafos-brinquedo

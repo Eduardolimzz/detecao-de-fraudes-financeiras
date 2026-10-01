@@ -1,3 +1,5 @@
 timestamp,algoritmo,representacao,n_vertices,n_arestas,tempo_ms,memoria_kb
 2026-10-01 17:48:57,demo_brinquedo,lista,4,3,0.004,3972
 2026-10-01 17:48:57,demo_brinquedo,matriz,4,3,0.001,3964
+2026-10-01 18:10:07,carga_csv,lista,32386,20000,30.502,9464
+2026-10-01 18:10:07,carga_csv,matriz,32386,20000,44.180,78608

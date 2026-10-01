@@ -3,9 +3,12 @@
 
 #include "representacao.h"
 
+#define DATASET_PADRAO "data/dataset.csv"
+
 /* Opções de linha de comando do programa. */
 typedef struct {
     TipoRepr repr;       /* --repr=lista | --repr=matriz (padrão: lista) */
+    const char *dataset; /* --dataset=CAMINHO (padrão: data/dataset.csv) */
     int pedir_ajuda;     /* --help */
 } Opcoes;
 
