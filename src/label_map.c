@@ -1,4 +1,5 @@
 #include "label_map.h"
+#include "mem_track.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +25,7 @@ struct LabelMap {
 static char *copiar_string(const char *s) {
     if (s == NULL) return NULL;
     size_t len = strlen(s);
-    char *copia = malloc(len + 1);
+    char *copia = mem_malloc(len + 1);
     if (copia != NULL) {
         memcpy(copia, s, len + 1);
     }
@@ -43,7 +44,7 @@ static unsigned int hash_fnv1a(const char *str) {
 
 static int redimensionar_buckets(LabelMap *map) {
     size_t nova_capacidade = map->num_buckets * 2;
-    LabelNode **novos_buckets = calloc(nova_capacidade, sizeof(LabelNode *));
+    LabelNode **novos_buckets = mem_calloc(nova_capacidade, sizeof(LabelNode *));
     if (novos_buckets == NULL) {
         return 0;
     }
@@ -59,30 +60,30 @@ static int redimensionar_buckets(LabelMap *map) {
         }
     }
 
-    free(map->buckets);
+    mem_free(map->buckets);
     map->buckets = novos_buckets;
     map->num_buckets = nova_capacidade;
     return 1;
 }
 
 LabelMap *label_map_criar(size_t capacidade_inicial) {
-    LabelMap *map = malloc(sizeof(LabelMap));
+    LabelMap *map = mem_malloc(sizeof(LabelMap));
     if (map == NULL) {
         return NULL;
     }
 
     size_t buckets_count = (capacidade_inicial > 0) ? capacidade_inicial : CAPACIDADE_PADRAO_BUCKETS;
-    map->buckets = calloc(buckets_count, sizeof(LabelNode *));
+    map->buckets = mem_calloc(buckets_count, sizeof(LabelNode *));
     if (map->buckets == NULL) {
-        free(map);
+        mem_free(map);
         return NULL;
     }
 
     int cap_rotulos = (int)buckets_count;
-    map->rotulos_por_indice = malloc((size_t)cap_rotulos * sizeof(char *));
+    map->rotulos_por_indice = mem_malloc((size_t)cap_rotulos * sizeof(char *));
     if (map->rotulos_por_indice == NULL) {
-        free(map->buckets);
-        free(map);
+        mem_free(map->buckets);
+        mem_free(map);
         return NULL;
     }
 
@@ -115,7 +116,7 @@ int label_map_obter_ou_inserir(LabelMap *map, const char *rotulo) {
 
     if (map->tamanho >= map->capacidade_rotulos) {
         int nova_cap = map->capacidade_rotulos * 2;
-        char **novo_array = realloc(map->rotulos_por_indice, (size_t)nova_cap * sizeof(char *));
+        char **novo_array = mem_realloc(map->rotulos_por_indice, (size_t)nova_cap * sizeof(char *));
         if (novo_array == NULL) {
             return -1;
         }
@@ -128,9 +129,9 @@ int label_map_obter_ou_inserir(LabelMap *map, const char *rotulo) {
         return -1;
     }
 
-    LabelNode *novo_no = malloc(sizeof(LabelNode));
+    LabelNode *novo_no = mem_malloc(sizeof(LabelNode));
     if (novo_no == NULL) {
-        free(copia);
+        mem_free(copia);
         return -1;
     }
 
@@ -187,15 +188,15 @@ void label_map_destruir(LabelMap *map) {
         while (atual != NULL) {
             LabelNode *temp = atual;
             atual = atual->next;
-            free(temp);
+            mem_free(temp);
         }
     }
-    free(map->buckets);
+    mem_free(map->buckets);
 
     for (int i = 0; i < map->tamanho; i++) {
-        free(map->rotulos_por_indice[i]);
+        mem_free(map->rotulos_por_indice[i]);
     }
-    free(map->rotulos_por_indice);
+    mem_free(map->rotulos_por_indice);
 
-    free(map);
+    mem_free(map);
 }

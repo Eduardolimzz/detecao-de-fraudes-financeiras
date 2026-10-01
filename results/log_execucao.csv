@@ -1,0 +1,3 @@
+timestamp,algoritmo,representacao,n_vertices,n_arestas,tempo_ms,memoria_kb
+2026-10-01 17:48:57,demo_brinquedo,lista,4,3,0.004,3972
+2026-10-01 17:48:57,demo_brinquedo,matriz,4,3,0.001,3964

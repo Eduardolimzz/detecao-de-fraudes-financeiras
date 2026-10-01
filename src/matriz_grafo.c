@@ -1,4 +1,5 @@
 #include "matriz_grafo.h"
+#include "mem_track.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,16 +26,16 @@ MatrizGrafo *matriz_grafo_criar(int num_vertices) {
         return NULL;
     }
 
-    MatrizGrafo *m = malloc(sizeof(MatrizGrafo));
+    MatrizGrafo *m = mem_malloc(sizeof(MatrizGrafo));
     if (m == NULL) {
         return NULL;
     }
 
     size_t bytes_totais = (size_t)num_vertices * (size_t)num_vertices;
-    m->matriz = calloc(bytes_totais, sizeof(unsigned char));
+    m->matriz = mem_calloc(bytes_totais, sizeof(unsigned char));
     if (m->matriz == NULL) {
         fprintf(stderr, "Erro: Falha ao alocar %zu bytes para a matriz de adjacência.\n", bytes_totais);
-        free(m);
+        mem_free(m);
         return NULL;
     }
 
@@ -70,6 +71,6 @@ void matriz_grafo_liberar(MatrizGrafo *m) {
     if (m == NULL) {
         return;
     }
-    free(m->matriz);
-    free(m);
+    mem_free(m->matriz);
+    mem_free(m);
 }

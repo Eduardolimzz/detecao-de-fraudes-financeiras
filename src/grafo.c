@@ -1,4 +1,5 @@
 #include "grafo.h"
+#include "mem_track.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,13 +23,13 @@ static int garantir_capacidade(Grafo *g, int vertice_max) {
         nova_cap *= 2;
     }
 
-    ArestaNode **novas_listas = realloc(g->listas, (size_t)nova_cap * sizeof(ArestaNode *));
+    ArestaNode **novas_listas = mem_realloc(g->listas, (size_t)nova_cap * sizeof(ArestaNode *));
     if (novas_listas == NULL) {
         return 0;
     }
     g->listas = novas_listas;
 
-    int *novos_graus = realloc(g->graus_saida, (size_t)nova_cap * sizeof(int));
+    int *novos_graus = mem_realloc(g->graus_saida, (size_t)nova_cap * sizeof(int));
     if (novos_graus == NULL) {
         return 0;
     }
@@ -44,23 +45,23 @@ static int garantir_capacidade(Grafo *g, int vertice_max) {
 }
 
 Grafo *grafo_criar(int num_vertices_inicial) {
-    Grafo *g = malloc(sizeof(Grafo));
+    Grafo *g = mem_malloc(sizeof(Grafo));
     if (g == NULL) {
         return NULL;
     }
 
     int cap = (num_vertices_inicial > 0) ? num_vertices_inicial : CAPACIDADE_PADRAO_VERTICES;
 
-    g->listas = calloc((size_t)cap, sizeof(ArestaNode *));
+    g->listas = mem_calloc((size_t)cap, sizeof(ArestaNode *));
     if (g->listas == NULL) {
-        free(g);
+        mem_free(g);
         return NULL;
     }
 
-    g->graus_saida = calloc((size_t)cap, sizeof(int));
+    g->graus_saida = mem_calloc((size_t)cap, sizeof(int));
     if (g->graus_saida == NULL) {
-        free(g->listas);
-        free(g);
+        mem_free(g->listas);
+        mem_free(g);
         return NULL;
     }
 
@@ -80,7 +81,7 @@ int grafo_inserir_aresta(Grafo *g, int origem, int destino, double valor) {
         return 0;
     }
 
-    ArestaNode *novo_no = malloc(sizeof(ArestaNode));
+    ArestaNode *novo_no = mem_malloc(sizeof(ArestaNode));
     if (novo_no == NULL) {
         return 0;
     }
@@ -130,11 +131,11 @@ void grafo_liberar(Grafo *g) {
         while (atual != NULL) {
             ArestaNode *temp = atual;
             atual = atual->proximo;
-            free(temp);
+            mem_free(temp);
         }
     }
 
-    free(g->listas);
-    free(g->graus_saida);
-    free(g);
+    mem_free(g->listas);
+    mem_free(g->graus_saida);
+    mem_free(g);
 }
