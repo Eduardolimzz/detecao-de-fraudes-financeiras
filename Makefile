@@ -13,9 +13,9 @@ DEPS = $(OBJS:.o=.d)
 TARGET = $(BUILD_DIR)/grafos
 
 TEST_DIR = tests
-TEST_TARGET = $(BUILD_DIR)/test_csv_parser
-TEST_SRCS = $(TEST_DIR)/test_csv_parser.c $(SRC_DIR)/csv_parser.c
-TEST_OBJS = $(BUILD_DIR)/test_csv_parser.o $(BUILD_DIR)/csv_parser.o
+TEST_SRCS = $(wildcard $(TEST_DIR)/test_*.c)
+TEST_BINS = $(patsubst $(TEST_DIR)/%.c,$(BUILD_DIR)/%,$(TEST_SRCS))
+LIB_OBJS = $(filter-out $(BUILD_DIR)/main.o,$(OBJS))
 
 .PHONY: all debug clean run test
 
@@ -28,8 +28,9 @@ $(TARGET): $(OBJS)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILD_DIR)/test_csv_parser.o: $(TEST_DIR)/test_csv_parser.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+# Cada tests/test_*.c vira um executável ligado a todos os módulos (menos main.o)
+$(BUILD_DIR)/test_%: $(TEST_DIR)/test_%.c $(LIB_OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(LIB_OBJS)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -43,9 +44,8 @@ run: all
 	./$(TARGET)
 
 test: CFLAGS += -MMD -MP
-test: $(TEST_OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(TEST_TARGET) $(TEST_OBJS)
-	./$(TEST_TARGET)
+test: $(TEST_BINS)
+	@for t in $(TEST_BINS); do echo "== $$t"; ./$$t || exit 1; done
 
 clean:
 	rm -rf $(BUILD_DIR)

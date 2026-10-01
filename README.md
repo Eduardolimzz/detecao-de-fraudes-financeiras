@@ -47,6 +47,39 @@ make clean
 
 O binário gerado fica em `build/grafos`.
 
+## Escolha da representação (lista ou matriz)
+
+O RF02 pede alternância entre lista e matriz de adjacência **sem trocar de
+programa**. Isso é feito com uma flag de linha de comando:
+
+```bash
+./build/grafos --repr=lista     # lista de adjacência (padrão)
+./build/grafos --repr=matriz    # matriz de adjacência
+./build/grafos --help
+```
+
+Todos os algoritmos usam apenas a interface de `include/representacao.h`
+(`rep_criar`, `rep_inserir_aresta`, `rep_existe_aresta`, `rep_iter_*`), então
+trocar a flag não exige alterar nenhum algoritmo. Exemplo de uso do iterador
+de vizinhos, idêntico nas duas representações:
+
+```c
+IteradorVizinhos it;
+int destino;
+rep_iter_inicio(&it, g, vertice);
+while (rep_iter_proximo(&it, &destino)) {
+    /* visita 'destino' */
+}
+```
+
+Diferenças que valem lembrar nos experimentos:
+
+- **Lista:** guarda cada transação, inclusive arestas paralelas e auto-laços.
+- **Matriz:** guarda só a conectividade (transações repetidas colapsam na
+  mesma célula) e é limitada a `MAX_VERTICES_MATRIZ` (50.000) vértices.
+  Percorrer os vizinhos de um vértice custa O(V) em vez de O(grau).
+- `rep_num_arestas` conta as transações inseridas, igual nas duas.
+
 ## Estrutura de diretórios
 
 ```
