@@ -1,0 +1,7 @@
+Timestamp,From Bank,Account,To Bank,Account.1,Amount Received,Receiving Currency,Amount Paid,Payment Currency,Payment Format,Is Laundering
+2022/09/01 00:00,010,AAA,010,BBB,100.50,Euro,100.50,Euro,ACH,0
+2022/09/01 00:05,010,BBB,020,AAA,80.00,Euro,80.00,Euro,ACH,1
+2022/09/01 00:10,020,AAA,010,AAA,60.25,Euro,60.25,Euro,Cheque,1
+2022/09/01 00:15,010,AAA,010,BBB,10.00,Euro,10.00,Euro,ACH,0
+2022/09/01 00:20,020,AAA,020,AAA,5.00,Euro,5.00,Euro,Reinvestment,0
+linha,quebrada,so_3_campos
