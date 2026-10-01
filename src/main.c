@@ -23,9 +23,12 @@ int main(int argc, char **argv) {
     printf("%s\n", PROJECT_NAME);
     printf("Versão: %s\n", PROJECT_VERSION);
     printf("Dataset: %s\n", op.dataset);
+    if (op.limite > 0) {
+        printf("Limite: %d vértices\n", op.limite);
+    }
 
     GrafoCarregado carga;
-    StatusCarga status = carregador_carregar(op.dataset, op.repr, &carga);
+    StatusCarga status = carregador_carregar(op.dataset, op.repr, op.limite, &carga);
     if (status != CARGA_OK) {
         fprintf(stderr, "Erro ao carregar '%s': %s.\n", op.dataset,
                 carregador_status_texto(status));

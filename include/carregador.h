@@ -32,13 +32,17 @@
 
 typedef struct {
     RepGrafo *grafo;
-    LabelMap *rotulos;         /* índice <-> "banco:conta" */
-    int n_vertices;
-    int n_arestas;
+    LabelMap *rotulos;         /* índice <-> "banco:conta" (todas as contas do CSV) */
+    int n_vertices;            /* |V| do grafo construído (subgrafo, se houver --limit) */
+    int n_arestas;             /* |E| do grafo construído */
+    int limite;                /* valor de --limit (0 = sem limite) */
+    int n_vertices_total;      /* |V| do CSV completo */
+    int n_arestas_total;       /* transações válidas do CSV completo */
     int linhas_ignoradas;      /* malformadas ou com menos colunas que o esperado */
     double tempo_ms;           /* tempo total da carga (leitura + construção) */
     size_t bytes_estruturas;   /* bytes vivos do grafo + rótulos após a carga */
     size_t bytes_pico;         /* pico durante a carga (inclui o vetor temporário) */
+    size_t bytes_grafo;        /* só lista/matriz, sem rótulos nem vetor temporário */
 } GrafoCarregado;
 
 typedef enum {
@@ -50,10 +54,14 @@ typedef enum {
     CARGA_LIMITE_REPR      /* representação não comporta |V| (matriz) */
 } StatusCarga;
 
-/* Carrega o CSV em 'caminho' usando a representação pedida. Em caso de
- * erro devolve o status; mesmo assim, chame carregador_liberar. */
-StatusCarga carregador_carregar(const char *caminho, TipoRepr repr, GrafoCarregado *saida);
-
+/* Carrega o CSV em 'caminho' usando a representação pedida.
+ * limite > 0: constrói o subgrafo induzido pelos 'limite' primeiros vértices
+ * (ordem de primeira aparição no CSV), para os testes de estresse.
+ * limite == 0: grafo completo. limite > |V| total equivale ao grafo completo.
+ * Em caso de erro devolve o status; mesmo assim, chame carregador_liberar. */
+StatusCarga carregador_carregar(const char *caminho, TipoRepr repr, int limite,
+                                GrafoCarregado *saida);
+                                
 /* Texto curto em português para um StatusCarga. */
 const char *carregador_status_texto(StatusCarga status);
 
