@@ -15,7 +15,7 @@
 
   ## Decisão
 
-  Adotar um subconjunto fixo de 20.000 transações (16.718 contas/vértices)
+  Adotar um subconjunto fixo de 20.000 transações (32.386 contas/vértices)
   como dataset definitivo do projeto, versionado diretamente no repositório em
   `data/dataset.csv` e `data/padroes_lavagem.txt`. O script de download
   (`scripts/download_dataset.sh`) e a dependência do Kaggle CLI foram
