@@ -3,3 +3,9 @@ timestamp,algoritmo,representacao,n_vertices,n_arestas,tempo_ms,memoria_kb
 2026-10-01 17:48:57,demo_brinquedo,matriz,4,3,0.001,3964
 2026-10-01 18:10:07,carga_csv,lista,32386,20000,30.502,9464
 2026-10-01 18:10:07,carga_csv,matriz,32386,20000,44.180,78608
+2026-10-02 10:36:19,carga_csv,lista,32386,20000,21.820,6968
+2026-10-02 10:36:19,deteccao_ciclos,lista,32386,20000,0.802,7620
+2026-10-02 10:37:17,carga_csv,lista,32386,20000,28.691,7016
+2026-10-02 10:37:17,deteccao_ciclos,lista,32386,20000,1.206,7616
+2026-10-02 10:37:22,carga_csv,matriz,32386,20000,44.165,76116
+2026-10-02 10:37:23,deteccao_ciclos,matriz,32386,20000,1507.474,76752

@@ -170,9 +170,9 @@ test(dfs): adiciona grafo-brinquedo com ciclo conhecido
 ### Fase I
 - [ ] Estrutura de lista de adjacência autoral
 - [x] Leitura e parsing do dataset
-- [ ] Implementação de DFS
-- [ ] Detecção de ciclos
-- [ ] Validação com grafos-brinquedo
+- [x] Implementação de DFS
+- [x] Detecção de ciclos
+- [x] Validação com grafos-brinquedo
 
 ### Fase II
 - [ ] Implementação de Bellman-Ford
