@@ -18,7 +18,7 @@ static void testar_fixture(TipoRepr repr) {
     size_t base = mem_bytes_atuais();
 
     GrafoCarregado c;
-    assert(carregador_carregar(FIXTURE_BRINQUEDO, repr, &c) == CARGA_OK);
+    assert(carregador_carregar(FIXTURE_BRINQUEDO, repr, 0, &c) == CARGA_OK);
 
     assert(c.n_vertices == 3);
     assert(c.n_arestas == 5); /* paralela e auto-laço preservadas */
@@ -53,11 +53,11 @@ static void testar_erros(void) {
     size_t base = mem_bytes_atuais();
     GrafoCarregado c;
 
-    assert(carregador_carregar("tests/fixtures/nao_existe.csv", REPR_LISTA, &c)
+    assert(carregador_carregar("tests/fixtures/nao_existe.csv", REPR_LISTA, 0, &c)
            == CARGA_ARQUIVO_INEXISTENTE);
     carregador_liberar(&c);
 
-    assert(carregador_carregar(FIXTURE_SO_CABECALHO, REPR_LISTA, &c) == CARGA_SEM_DADOS);
+    assert(carregador_carregar(FIXTURE_SO_CABECALHO, REPR_LISTA, 0, &c) == CARGA_SEM_DADOS);
     carregador_liberar(&c);
 
     assert(mem_bytes_atuais() == base);
@@ -70,7 +70,7 @@ static void testar_dataset_real(void) {
     size_t base = mem_bytes_atuais();
 
     GrafoCarregado c;
-    assert(carregador_carregar(DATASET, REPR_LISTA, &c) == CARGA_OK);
+    assert(carregador_carregar(DATASET, REPR_LISTA, 0, &c) == CARGA_OK);
     assert(c.n_vertices == 32386);
     assert(c.n_arestas == 20000);
     assert(c.linhas_ignoradas == 0);
