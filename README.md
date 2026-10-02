@@ -80,6 +80,24 @@ Diferenças que valem lembrar nos experimentos:
   Percorrer os vizinhos de um vértice custa O(V) em vez de O(grau).
 - `rep_num_arestas` conta as transações inseridas, igual nas duas.
 
+## Subgrafos para os testes de estresse (--limit)
+
+O protocolo experimental pede execuções em subconjuntos do grafo (N = 100, 500, 1000, ...). A flag `--limit=N` constrói o **subgrafo induzido** pelos N
+primeiros vértices distintos, na ordem de primeira aparição no CSV:
+
+```
+./build/grafos --limit=500                  # N=500, lista
+./build/grafos --repr=matriz --limit=1000   # N=1000, matriz
+./scripts/estresse.sh                       # N = 100 ... 20000, nas duas representações
+```
+
+- O mesmo CSV e o mesmo N geram sempre o mesmo subgrafo (reprodutível).
+- Se N for maior que |V|, o grafo completo é usado, com um aviso.
+- O sumário mostra |V| e |E| do subgrafo e os totais do grafo completo; o
+  `results/log_execucao.csv` registra os valores do subgrafo.
+- Testes: `bash tests/test_limit.sh`. Detalhes em
+  [docs/adr/0003-subgrafo-induzido-limit.md](docs/adr/0003-subgrafo-induzido-limit.md).
+
 ## Carga do dataset e log de execução
 
 Um único comando carrega o CSV completo, constrói o grafo na representação

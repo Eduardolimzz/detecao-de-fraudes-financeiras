@@ -101,7 +101,8 @@ static StatusCarga primeira_passada(const char *caminho, LabelMap *rotulos,
     return status;
 }
 
-StatusCarga carregador_carregar(const char *caminho, TipoRepr repr, GrafoCarregado *saida) {
+StatusCarga carregador_carregar(const char *caminho, TipoRepr repr, int limite,
+                                GrafoCarregado *saida) {
     memset(saida, 0, sizeof(*saida));
 
     size_t base_bytes = mem_bytes_atuais();
@@ -112,15 +113,26 @@ StatusCarga carregador_carregar(const char *caminho, TipoRepr repr, GrafoCarrega
 
     VetorArestas arestas = {NULL, 0, 0};
     StatusCarga status = CARGA_SEM_MEMORIA;
+    size_t antes_grafo = 0;
+    int n = 0;
 
+    saida->limite = limite;
     saida->rotulos = label_map_criar(0);
     if (saida->rotulos != NULL) {
         status = primeira_passada(caminho, saida->rotulos, &arestas, &saida->linhas_ignoradas);
     }
 
     if (status == CARGA_OK) {
-        saida->n_vertices = label_map_tamanho(saida->rotulos);
-        saida->grafo = rep_criar(repr, saida->n_vertices);
+        saida->n_vertices_total = label_map_tamanho(saida->rotulos);
+        saida->n_arestas_total = arestas.tamanho;
+        /* Os ids seguem a ordem de primeira aparição no CSV, então os N
+         * primeiros vértices são os ids 0..N-1. */
+        n = (limite > 0 && limite < saida->n_vertices_total) ? limite
+                                                             : saida->n_vertices_total;
+        saida->n_vertices = n;
+
+        antes_grafo = mem_bytes_atuais();
+        saida->grafo = rep_criar(repr, n);
         if (saida->grafo == NULL) {
             /* só falha aqui por limite da matriz ou falta de memória */
             status = (repr == REPR_MATRIZ) ? CARGA_LIMITE_REPR : CARGA_SEM_MEMORIA;
@@ -130,12 +142,16 @@ StatusCarga carregador_carregar(const char *caminho, TipoRepr repr, GrafoCarrega
     if (status == CARGA_OK) {
         for (int i = 0; i < arestas.tamanho; i++) {
             const ArestaTemp *a = &arestas.itens[i];
+            if (a->origem >= n || a->destino >= n) {
+                continue; /* fora do subgrafo induzido */
+            }
             if (!rep_inserir_aresta(saida->grafo, a->origem, a->destino, a->valor)) {
                 status = CARGA_SEM_MEMORIA;
                 break;
             }
         }
         saida->n_arestas = rep_num_arestas(saida->grafo);
+        saida->bytes_grafo = mem_bytes_atuais() - antes_grafo;
     }
 
     mem_free(arestas.itens);
@@ -161,10 +177,20 @@ const char *carregador_status_texto(StatusCarga status) {
 
 void carregador_imprimir_sumario(const GrafoCarregado *c, TipoRepr repr) {
     printf("Sumário da carga (representação: %s)\n", rep_tipo_nome(repr));
+    if (c->limite > 0) {
+        printf("  Subgrafo induzido pelos %d primeiros vértices (--limit=%d)\n",
+               c->n_vertices, c->limite);
+        if (c->limite > c->n_vertices_total) {
+            printf("  Aviso: --limit maior que |V| total; usando o grafo completo\n");
+        }
+        printf("  Grafo completo:         |V|=%d, |E|=%d\n",
+               c->n_vertices_total, c->n_arestas_total);
+    }
     printf("  |V| (contas distintas): %d\n", c->n_vertices);
     printf("  |E| (transações):       %d\n", c->n_arestas);
     printf("  Linhas ignoradas:       %d\n", c->linhas_ignoradas);
     printf("  Tempo de carga:         %.3f ms\n", c->tempo_ms);
+    printf("  Memória do grafo:       %.1f KB\n", (double)c->bytes_grafo / 1024.0);
     printf("  Memória das estruturas: %.1f KB (pico na carga: %.1f KB)\n",
            (double)c->bytes_estruturas / 1024.0, (double)c->bytes_pico / 1024.0);
     printf("  Pico de RSS do processo: %ld KB\n", bench_pico_rss_kb());

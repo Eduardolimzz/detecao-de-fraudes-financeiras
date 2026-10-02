@@ -9,6 +9,8 @@
 typedef struct {
     TipoRepr repr;       /* --repr=lista | --repr=matriz (padrão: lista) */
     const char *dataset; /* --dataset=CAMINHO (padrão: data/dataset.csv) */
+    int limite;          /* --limit=N: subgrafo com os N primeiros vértices
+                            (0 = grafo completo, o padrão) */
     int pedir_ajuda;     /* --help */
 } Opcoes;
 
