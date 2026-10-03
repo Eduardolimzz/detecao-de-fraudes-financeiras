@@ -10,12 +10,21 @@
 #define PROJECT_NAME "Detecção de Fraudes Financeiras em Grafos"
 #define PROJECT_VERSION "0.5.0"
 
+/* Imprime o caminho do ciclo fechando de volta no primeiro vértice:
+ * "A -> B -> C -> A" (auto-laço: "A -> A"). Sem quebra de linha. */
+static void imprimir_caminho_ciclo(const Ciclo *c) {
+    for (int k = 0; k < c->comprimento; k++) {
+        printf("%s -> ", c->rotulos[k]);
+    }
+    printf("%s", c->rotulos[0]);
+}
+
 /* Etapa 5: detecta ciclos no grafo carregado e cruza cada um com a coluna
  * "Is Laundering" do CSV de origem (validação semântica, não só
  * estrutural). Não aborta em caso de erro: a detecção de ciclos é um
  * extra sobre a carga, que já foi validada. */
 static void executar_deteccao_ciclos(const GrafoCarregado *carga, TipoRepr repr,
-                                     const char *caminho_csv) {
+                                     const char *caminho_csv, int mostrar_ciclos) {
     Cronometro cron;
     bench_cronometro_iniciar(&cron);
 
@@ -53,10 +62,8 @@ static void executar_deteccao_ciclos(const GrafoCarregado *carga, TipoRepr repr,
         if (lavagem != NULL && validacao_lavagem_ciclo_suspeito(lavagem, c)) {
             n_suspeitos++;
             printf("  Ciclo suspeito (comprimento %d): ", c->comprimento);
-            for (int k = 0; k < c->comprimento; k++) {
-                printf("%s -> ", c->rotulos[k]);
-            }
-            printf("%s\n", c->rotulos[0]);
+            imprimir_caminho_ciclo(c);
+            printf("\n");
         }
     }
 
@@ -69,6 +76,24 @@ static void executar_deteccao_ciclos(const GrafoCarregado *carga, TipoRepr repr,
         }
     }
     mem_free(histograma);
+
+    /* --mostrar-ciclos=N|todos: caminho dos N primeiros ciclos, na ordem
+     * em que a DFS os encontrou. Com 0 (padrão) nada é impresso aqui. */
+    int n_mostrar = (mostrar_ciclos == MOSTRAR_CICLOS_TODOS || mostrar_ciclos > ciclos->n_ciclos)
+                        ? ciclos->n_ciclos
+                        : mostrar_ciclos;
+    if (n_mostrar > 0) {
+        printf("  Caminhos dos ciclos (%d de %d):\n", n_mostrar, ciclos->n_ciclos);
+        for (int i = 0; i < n_mostrar; i++) {
+            const Ciclo *c = &ciclos->itens[i];
+            printf("    Ciclo %d (comprimento %d): ", i + 1, c->comprimento);
+            imprimir_caminho_ciclo(c);
+            if (lavagem != NULL && validacao_lavagem_ciclo_suspeito(lavagem, c)) {
+                printf(" [SUSPEITO - contem transacao marcada como lavagem]");
+            }
+            printf("\n");
+        }
+    }
 
     if (lavagem == NULL) {
         printf("  Aviso: não foi possível cruzar com Is Laundering (%s).\n", caminho_csv);
@@ -123,7 +148,7 @@ int main(int argc, char **argv) {
     bench_registrar_log("carga_csv", rep_tipo_nome(op.repr), carga.n_vertices,
                         carga.n_arestas, carga.tempo_ms);
 
-    executar_deteccao_ciclos(&carga, op.repr, op.dataset);
+    executar_deteccao_ciclos(&carga, op.repr, op.dataset, op.mostrar_ciclos);
 
     carregador_liberar(&carga);
     return 0;
