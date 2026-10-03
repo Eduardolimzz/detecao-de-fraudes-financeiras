@@ -4,6 +4,7 @@
 #include "representacao.h"
 
 #define DATASET_PADRAO "data/dataset.csv"
+#define MOSTRAR_CICLOS_TODOS (-1)
 
 /* Opções de linha de comando do programa. */
 typedef struct {
@@ -11,6 +12,9 @@ typedef struct {
     const char *dataset; /* --dataset=CAMINHO (padrão: data/dataset.csv) */
     int limite;          /* --limit=N: subgrafo com os N primeiros vértices
                             (0 = grafo completo, o padrão) */
+    int mostrar_ciclos;  /* --mostrar-ciclos=N|todos: imprime o caminho dos N
+                            primeiros ciclos (0 = nenhum, o padrão;
+                            MOSTRAR_CICLOS_TODOS = todos) */
     int pedir_ajuda;     /* --help */
 } Opcoes;
 

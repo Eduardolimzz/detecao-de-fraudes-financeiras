@@ -9,3 +9,7 @@ timestamp,algoritmo,representacao,n_vertices,n_arestas,tempo_ms,memoria_kb
 2026-10-02 10:37:17,deteccao_ciclos,lista,32386,20000,1.206,7616
 2026-10-02 10:37:22,carga_csv,matriz,32386,20000,44.165,76116
 2026-10-02 10:37:23,deteccao_ciclos,matriz,32386,20000,1507.474,76752
+2026-10-02 22:04:18,carga_csv,lista,32386,20000,55.289,7376
+2026-10-02 22:04:18,deteccao_ciclos,lista,32386,20000,1.084,7908
+2026-10-02 22:04:25,carga_csv,lista,32386,20000,20.921,7376
+2026-10-02 22:04:25,deteccao_ciclos,lista,32386,20000,0.798,7908
