@@ -3,9 +3,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 struct MatrizGrafo {
-    unsigned char *matriz; 
+    double *pesos;           /* Vetor contíguo V x V de pesos (double) */
+    unsigned char *existe;  /* Vetor contíguo V x V de presença (1 = existe, 0 = ausente) */
     int num_vertices;
 };
 
@@ -15,14 +17,13 @@ MatrizGrafo *matriz_grafo_criar(int num_vertices) {
         return NULL;
     }
 
-  
     if (num_vertices > MAX_VERTICES_MATRIZ) {
         fprintf(stderr,
                 "Erro: Número de vértices (%d) excede o limite prático suportado "
                 "pela matriz de adjacência (%d vértices, que exige ~%.2f GB de RAM).\n",
                 num_vertices,
                 MAX_VERTICES_MATRIZ,
-                ((double)num_vertices * (double)num_vertices) / (1024.0 * 1024.0 * 1024.0));
+                ((double)num_vertices * (double)num_vertices * (sizeof(double) + sizeof(unsigned char))) / (1024.0 * 1024.0 * 1024.0));
         return NULL;
     }
 
@@ -31,10 +32,15 @@ MatrizGrafo *matriz_grafo_criar(int num_vertices) {
         return NULL;
     }
 
-    size_t bytes_totais = (size_t)num_vertices * (size_t)num_vertices;
-    m->matriz = mem_calloc(bytes_totais, sizeof(unsigned char));
-    if (m->matriz == NULL) {
-        fprintf(stderr, "Erro: Falha ao alocar %zu bytes para a matriz de adjacência.\n", bytes_totais);
+    size_t total_elementos = (size_t)num_vertices * (size_t)num_vertices;
+    
+    m->pesos = mem_calloc(total_elementos, sizeof(double));
+    m->existe = mem_calloc(total_elementos, sizeof(unsigned char));
+
+    if (m->pesos == NULL || m->existe == NULL) {
+        fprintf(stderr, "Erro: Falha ao alocar memória para a matriz de adjacência ponderada.\n");
+        if (m->pesos) mem_free(m->pesos);
+        if (m->existe) mem_free(m->existe);
         mem_free(m);
         return NULL;
     }
@@ -43,13 +49,19 @@ MatrizGrafo *matriz_grafo_criar(int num_vertices) {
     return m;
 }
 
-int matriz_grafo_inserir_aresta(MatrizGrafo *m, int origem, int destino) {
+int matriz_grafo_inserir_aresta(MatrizGrafo *m, int origem, int destino, double peso) {
     if (m == NULL || origem < 0 || origem >= m->num_vertices || destino < 0 || destino >= m->num_vertices) {
         return 0;
     }
 
-    size_t indice = (size_t)origem * (size_t)m->num_vertices + (size_t)destino;
-    m->matriz[indice] = 1;
+    size_t idx = (size_t)origem * (size_t)m->num_vertices + (size_t)destino;
+
+    /* Regra para paralelas na matriz: retém a aresta de menor peso w (maior retorno) */
+    if (!m->existe[idx] || peso < m->pesos[idx]) {
+        m->pesos[idx] = peso;
+        m->existe[idx] = 1;
+    }
+
     return 1;
 }
 
@@ -58,8 +70,23 @@ int matriz_grafo_existe_aresta(const MatrizGrafo *m, int origem, int destino) {
         return 0;
     }
 
-    size_t indice = (size_t)origem * (size_t)m->num_vertices + (size_t)destino;
-    return m->matriz[indice] != 0;
+    size_t idx = (size_t)origem * (size_t)m->num_vertices + (size_t)destino;
+    return m->existe[idx] != 0;
+}
+
+int matriz_grafo_obter_peso(const MatrizGrafo *m, int origem, int destino, double *peso_out) {
+    if (m == NULL || origem < 0 || origem >= m->num_vertices || destino < 0 || destino >= m->num_vertices) {
+        return 0;
+    }
+
+    size_t idx = (size_t)origem * (size_t)m->num_vertices + (size_t)destino;
+    if (m->existe[idx]) {
+        if (peso_out != NULL) {
+            *peso_out = m->pesos[idx];
+        }
+        return 1;
+    }
+    return 0;
 }
 
 int matriz_grafo_num_vertices(const MatrizGrafo *m) {
@@ -71,6 +98,11 @@ void matriz_grafo_liberar(MatrizGrafo *m) {
     if (m == NULL) {
         return;
     }
-    mem_free(m->matriz);
+    if (m->pesos != NULL) {
+        mem_free(m->pesos);
+    }
+    if (m->existe != NULL) {
+        mem_free(m->existe);
+    }
     mem_free(m);
 }
