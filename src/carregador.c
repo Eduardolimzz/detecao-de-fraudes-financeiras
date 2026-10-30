@@ -47,17 +47,23 @@ static int montar_chave(char *chave, size_t tam, const char *banco, const char *
     return n > 0 && (size_t)n < tam;
 }
 
-/* O valor financeiro é guardado só como metadado para a Fase II; um valor
- * ilegível não invalida a topologia, então vira 0. */
+/* Monta "banco:conta:moeda". Retorna 0 se não couber no buffer. */
+static int montar_chave_estado(char *chave, size_t tam, const char *banco, const char *conta, const char *moeda) {
+    int n = snprintf(chave, tam, "%s:%s:%s", banco, conta, moeda);
+    return n > 0 && (size_t)n < tam;
+}
+
+/* O valor financeiro é lido com strtod; retorna 0.0 se não for numérico. */
 static double ler_valor(const char *texto) {
     char *fim = NULL;
     double v = strtod(texto, &fim);
     return (fim == texto) ? 0.0 : v;
 }
 
-/* Primeira passada: lê o CSV e preenche rótulos + vetor de arestas. */
-static StatusCarga primeira_passada(const char *caminho, LabelMap *rotulos,
-                                    VetorArestas *arestas, int *ignoradas) {
+/* Primeira passada: lê o CSV e preenche os rótulos topológicos, rótulos por estado e vetores de arestas. */
+static StatusCarga primeira_passada(const char *caminho, LabelMap *rotulos_top, LabelMap *rotulos_est,
+                                    VetorArestas *arestas_top, ArestaPonderada **arestas_bf_out,
+                                    int *n_bf_out, int *ignoradas) {
     int erro = 0;
     CsvParser *parser = csv_parser_abrir(caminho, &erro);
     if (parser == NULL) {
@@ -66,27 +72,66 @@ static StatusCarga primeira_passada(const char *caminho, LabelMap *rotulos,
 
     StatusCarga status = CARGA_OK;
     LinhaCSV linha;
-    char chave_origem[TAMANHO_CHAVE];
-    char chave_destino[TAMANHO_CHAVE];
+    char chave_origem[TAMANHO_CHAVE], chave_destino[TAMANHO_CHAVE];
+    char estado_origem[TAMANHO_CHAVE], estado_destino[TAMANHO_CHAVE];
+
+    int cap_bf = CAPACIDADE_INICIAL_ARESTAS;
+    int n_bf = 0;
+    ArestaPonderada *arestas_bf = mem_malloc((size_t)cap_bf * sizeof(ArestaPonderada));
     int invalidas_proprias = 0;
+
+    if (arestas_bf == NULL) {
+        csv_parser_fechar(parser);
+        return CARGA_SEM_MEMORIA;
+    }
 
     while (csv_parser_proxima_linha(parser, &linha)) {
         if (linha.n_campos < NUM_COLUNAS_MINIMO ||
             !montar_chave(chave_origem, sizeof(chave_origem),
                           linha.campos[COL_BANCO_ORIGEM], linha.campos[COL_CONTA_ORIGEM]) ||
             !montar_chave(chave_destino, sizeof(chave_destino),
-                          linha.campos[COL_BANCO_DESTINO], linha.campos[COL_CONTA_DESTINO])) {
+                          linha.campos[COL_BANCO_DESTINO], linha.campos[COL_CONTA_DESTINO]) ||
+            !montar_chave_estado(estado_origem, sizeof(estado_origem),
+                                 linha.campos[COL_BANCO_ORIGEM], linha.campos[COL_CONTA_ORIGEM], linha.campos[COL_MOEDA_PAGA]) ||
+            !montar_chave_estado(estado_destino, sizeof(estado_destino),
+                                 linha.campos[COL_BANCO_DESTINO], linha.campos[COL_CONTA_DESTINO], linha.campos[COL_MOEDA_RECEBIDA])) {
             invalidas_proprias++;
             csv_parser_liberar_linha(&linha);
             continue;
         }
 
-        int origem = label_map_obter_ou_inserir(rotulos, chave_origem);
-        int destino = label_map_obter_ou_inserir(rotulos, chave_destino);
-        double valor = ler_valor(linha.campos[COL_VALOR_PAGO]);
+        /* 1. Grafo Topológico da Fase I */
+        int orig_top = label_map_obter_ou_inserir(rotulos_top, chave_origem);
+        int dest_top = label_map_obter_ou_inserir(rotulos_top, chave_destino);
+        double v_pago = ler_valor(linha.campos[COL_VALOR_PAGO]);
+        double v_recebido = ler_valor(linha.campos[COL_VALOR_RECEBIDO]);
+
+        /* 2. Grafo de Estados e Pesos logarítmicos da Fase II: w = -ln(r) */
+        double peso_w = calcular_peso_transacao(v_pago, v_recebido);
+
+        if (isfinite(peso_w)) {
+            int orig_est = label_map_obter_ou_inserir(rotulos_est, estado_origem);
+            int dest_est = label_map_obter_ou_inserir(rotulos_est, estado_destino);
+
+            if (n_bf >= cap_bf) {
+                cap_bf *= 2;
+                ArestaPonderada *novo = mem_realloc(arestas_bf, (size_t)cap_bf * sizeof(ArestaPonderada));
+                if (novo == NULL) {
+                    status = CARGA_SEM_MEMORIA;
+                    csv_parser_liberar_linha(&linha);
+                    break;
+                }
+                arestas_bf = novo;
+            }
+            arestas_bf[n_bf].origem = orig_est;
+            arestas_bf[n_bf].destino = dest_est;
+            arestas_bf[n_bf].peso = peso_w;
+            n_bf++;
+        }
+
         csv_parser_liberar_linha(&linha);
 
-        if (origem < 0 || destino < 0 || !vetor_adicionar(arestas, origem, destino, valor)) {
+        if (orig_top < 0 || dest_top < 0 || !vetor_adicionar(arestas_top, orig_top, dest_top, v_pago)) {
             status = CARGA_SEM_MEMORIA;
             break;
         }
@@ -95,7 +140,14 @@ static StatusCarga primeira_passada(const char *caminho, LabelMap *rotulos,
     *ignoradas = csv_parser_contador_erros(parser) + invalidas_proprias;
     csv_parser_fechar(parser);
 
-    if (status == CARGA_OK && arestas->tamanho == 0) {
+    if (status == CARGA_OK) {
+        *arestas_bf_out = arestas_bf;
+        *n_bf_out = n_bf;
+    } else {
+        mem_free(arestas_bf);
+    }
+
+    if (status == CARGA_OK && arestas_top->tamanho == 0) {
         status = CARGA_SEM_DADOS;
     }
     return status;
@@ -118,15 +170,19 @@ StatusCarga carregador_carregar(const char *caminho, TipoRepr repr, int limite,
 
     saida->limite = limite;
     saida->rotulos = label_map_criar(0);
-    if (saida->rotulos != NULL) {
-        status = primeira_passada(caminho, saida->rotulos, &arestas, &saida->linhas_ignoradas);
+    saida->rotulos_estado = label_map_criar(0);
+
+    if (saida->rotulos != NULL && saida->rotulos_estado != NULL) {
+        status = primeira_passada(caminho, saida->rotulos, saida->rotulos_estado,
+                                 &arestas, &saida->arestas_bf, &saida->n_arestas_bf,
+                                 &saida->linhas_ignoradas);
     }
 
     if (status == CARGA_OK) {
         saida->n_vertices_total = label_map_tamanho(saida->rotulos);
+        saida->n_vertices_estado = label_map_tamanho(saida->rotulos_estado);
         saida->n_arestas_total = arestas.tamanho;
-        /* Os ids seguem a ordem de primeira aparição no CSV, então os N
-         * primeiros vértices são os ids 0..N-1. */
+
         n = (limite > 0 && limite < saida->n_vertices_total) ? limite
                                                              : saida->n_vertices_total;
         saida->n_vertices = n;
@@ -134,7 +190,6 @@ StatusCarga carregador_carregar(const char *caminho, TipoRepr repr, int limite,
         antes_grafo = mem_bytes_atuais();
         saida->grafo = rep_criar(repr, n);
         if (saida->grafo == NULL) {
-            /* só falha aqui por limite da matriz ou falta de memória */
             status = (repr == REPR_MATRIZ) ? CARGA_LIMITE_REPR : CARGA_SEM_MEMORIA;
         }
     }
@@ -143,7 +198,7 @@ StatusCarga carregador_carregar(const char *caminho, TipoRepr repr, int limite,
         for (int i = 0; i < arestas.tamanho; i++) {
             const ArestaTemp *a = &arestas.itens[i];
             if (a->origem >= n || a->destino >= n) {
-                continue; /* fora do subgrafo induzido */
+                continue;
             }
             if (!rep_inserir_aresta(saida->grafo, a->origem, a->destino, a->valor)) {
                 status = CARGA_SEM_MEMORIA;
@@ -187,7 +242,9 @@ void carregador_imprimir_sumario(const GrafoCarregado *c, TipoRepr repr) {
                c->n_vertices_total, c->n_arestas_total);
     }
     printf("  |V| (contas distintas): %d\n", c->n_vertices);
+    printf("  |V_estado| (com moeda): %d\n", c->n_vertices_estado);
     printf("  |E| (transações):       %d\n", c->n_arestas);
+    printf("  |E_bf| (com peso):      %d\n", c->n_arestas_bf);
     printf("  Linhas ignoradas:       %d\n", c->linhas_ignoradas);
     printf("  Tempo de carga:         %.3f ms\n", c->tempo_ms);
     printf("  Memória do grafo:       %.1f KB\n", (double)c->bytes_grafo / 1024.0);
@@ -202,6 +259,12 @@ void carregador_liberar(GrafoCarregado *c) {
     }
     rep_liberar(c->grafo);
     label_map_destruir(c->rotulos);
-    c->grafo = NULL;
-    c->rotulos = NULL;
+    
+    if (c->rotulos_estado != NULL) {
+        label_map_destruir(c->rotulos_estado);
+    }
+    if (c->arestas_bf != NULL) {
+        mem_free(c->arestas_bf);
+    }
+    memset(c, 0, sizeof(*c));
 }

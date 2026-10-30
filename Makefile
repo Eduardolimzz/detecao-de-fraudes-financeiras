@@ -3,9 +3,10 @@ CFLAGS = -Wall -Wextra -O2 -std=c11
 DEBUG_FLAGS = -g -O0 -DDEBUG -Wall -Wextra -std=c11
 INCLUDES = -Iinclude
 
-# GetProcessMemoryInfo (bench.c) fica em psapi no Windows
+# Biblioteca matemática (-lm) em Linux/Unix e suporte a psapi no Windows
+LDLIBS = -lm
 ifeq ($(OS),Windows_NT)
-LDLIBS = -lpsapi
+LDLIBS += -lpsapi
 endif
 
 SRC_DIR = src
@@ -33,7 +34,7 @@ $(TARGET): $(OBJS)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-# Cada tests/test_*.c vira um executável ligado a todos os módulos (menos main.o)
+# Cada tests/test_*.c vira um executavel ligado a todos os modulos (menos main.o)
 $(BUILD_DIR)/test_%: $(TEST_DIR)/test_%.c $(LIB_OBJS) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(LIB_OBJS) $(LDLIBS)
 
