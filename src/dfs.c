@@ -117,7 +117,7 @@ ResultadoDFS *dfs_executar(const RepGrafo *g) {
             int u = topo->vertice;
             int v;
 
-            if (!rep_iter_proximo(&topo->it, &v)) {
+            if (!rep_iter_proximo(&topo->it, &v, NULL)) {
                 /* todos os vizinhos de u já foram explorados */
                 r->cor[u] = DFS_PRETO;
                 r->finalizacao[u] = tempo++;

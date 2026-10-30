@@ -62,7 +62,7 @@ RepGrafo *rep_criar(TipoRepr tipo, int num_vertices) {
     return g;
 }
 
-int rep_inserir_aresta(RepGrafo *g, int origem, int destino, double valor) {
+int rep_inserir_aresta(RepGrafo *g, int origem, int destino, double peso) {
     if (g == NULL || origem < 0 || origem >= g->num_vertices ||
         destino < 0 || destino >= g->num_vertices) {
         return 0;
@@ -70,9 +70,9 @@ int rep_inserir_aresta(RepGrafo *g, int origem, int destino, double valor) {
 
     int ok = 0;
     if (g->tipo == REPR_LISTA) {
-        ok = grafo_inserir_aresta(g->lista, origem, destino, valor);
+        ok = grafo_inserir_aresta(g->lista, origem, destino, peso);
     } else {
-        ok = matriz_grafo_inserir_aresta(g->matriz, origem, destino);
+        ok = matriz_grafo_inserir_aresta(g->matriz, origem, destino, peso);
     }
 
     if (ok) {
@@ -82,7 +82,8 @@ int rep_inserir_aresta(RepGrafo *g, int origem, int destino, double valor) {
 }
 
 int rep_existe_aresta(const RepGrafo *g, int origem, int destino) {
-    if (g == NULL) {
+    if (g == NULL || origem < 0 || origem >= g->num_vertices ||
+        destino < 0 || destino >= g->num_vertices) {
         return 0;
     }
 
@@ -99,8 +100,30 @@ int rep_existe_aresta(const RepGrafo *g, int origem, int destino) {
     return 0;
 }
 
+int rep_obter_peso(const RepGrafo *g, int origem, int destino, double *peso_out) {
+    if (g == NULL || origem < 0 || origem >= g->num_vertices ||
+        destino < 0 || destino >= g->num_vertices) {
+        return 0;
+    }
+
+    if (g->tipo == REPR_MATRIZ) {
+        return matriz_grafo_obter_peso(g->matriz, origem, destino, peso_out);
+    }
+
+    for (const ArestaNode *no = grafo_obter_adjacentes(g->lista, origem);
+         no != NULL; no = no->proximo) {
+        if (no->destino == destino) {
+            if (peso_out != NULL) {
+                *peso_out = no->valor;
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
 TipoRepr rep_tipo(const RepGrafo *g) {
-    return g->tipo;
+    return (g == NULL) ? REPR_LISTA : g->tipo;
 }
 
 int rep_num_vertices(const RepGrafo *g) {
@@ -112,6 +135,10 @@ int rep_num_arestas(const RepGrafo *g) {
 }
 
 void rep_iter_inicio(IteradorVizinhos *it, const RepGrafo *g, int vertice) {
+    if (it == NULL) {
+        return;
+    }
+
     it->g = g;
     it->vertice = vertice;
     it->no_atual = NULL;
@@ -126,8 +153,8 @@ void rep_iter_inicio(IteradorVizinhos *it, const RepGrafo *g, int vertice) {
     }
 }
 
-int rep_iter_proximo(IteradorVizinhos *it, int *destino_out) {
-    if (it->g == NULL) {
+int rep_iter_proximo(IteradorVizinhos *it, int *destino_out, double *peso_out) {
+    if (it == NULL || it->g == NULL) {
         return 0;
     }
 
@@ -136,17 +163,27 @@ int rep_iter_proximo(IteradorVizinhos *it, int *destino_out) {
         if (no == NULL) {
             return 0;
         }
-        *destino_out = no->destino;
+        if (destino_out != NULL) {
+            *destino_out = no->destino;
+        }
+        if (peso_out != NULL) {
+            *peso_out = no->valor;
+        }
         it->no_atual = no->proximo;
         return 1;
     }
 
-    /* Matriz: varre a linha do vértice até achar a próxima célula marcada.
-     * Custo O(V) por vértice, o que é esperado nesta representação. */
+    /* Matriz: varre a linha do vértice até achar a próxima célula existente */
     while (it->coluna_atual < it->g->num_vertices) {
         int col = it->coluna_atual++;
-        if (matriz_grafo_existe_aresta(it->g->matriz, it->vertice, col)) {
-            *destino_out = col;
+        double peso_encontrado;
+        if (matriz_grafo_obter_peso(it->g->matriz, it->vertice, col, &peso_encontrado)) {
+            if (destino_out != NULL) {
+                *destino_out = col;
+            }
+            if (peso_out != NULL) {
+                *peso_out = peso_encontrado;
+            }
             return 1;
         }
     }
@@ -157,7 +194,11 @@ void rep_liberar(RepGrafo *g) {
     if (g == NULL) {
         return;
     }
-    grafo_liberar(g->lista);
-    matriz_grafo_liberar(g->matriz);
+    if (g->lista != NULL) {
+        grafo_liberar(g->lista);
+    }
+    if (g->matriz != NULL) {
+        matriz_grafo_liberar(g->matriz);
+    }
     mem_free(g);
 }

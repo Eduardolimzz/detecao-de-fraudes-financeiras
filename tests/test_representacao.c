@@ -1,13 +1,14 @@
 #include "representacao.h"
 
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 
 #define N_BRINQUEDO 5
 
 /* Grafo-brinquedo dirigido:
- *   0 -> 1, 0 -> 2, 1 -> 3, 2 -> 3, 3 -> 3 (auto-laço), 3 -> 4
- * e uma aresta paralela 0 -> 1 repetida. */
+-   0 -> 1, 0 -> 2, 1 -> 3, 2 -> 3, 3 -> 3 (auto-laço), 3 -> 4
+- e uma aresta paralela 0 -> 1 repetida. */
 static void montar_brinquedo(RepGrafo *g) {
     assert(rep_inserir_aresta(g, 0, 1, 10.0));
     assert(rep_inserir_aresta(g, 0, 2, 20.0));
@@ -19,7 +20,7 @@ static void montar_brinquedo(RepGrafo *g) {
 }
 
 /* Marca em visto[] todos os vizinhos de v e devolve quantos "passos"
- * o iterador deu (inclui repetições da lista). */
+- o iterador deu (inclui repetições da lista). Passa NULL para ignorar o peso. */
 static int coletar_vizinhos(const RepGrafo *g, int v, int visto[N_BRINQUEDO]) {
     IteradorVizinhos it;
     int destino;
@@ -29,7 +30,7 @@ static int coletar_vizinhos(const RepGrafo *g, int v, int visto[N_BRINQUEDO]) {
         visto[i] = 0;
     }
     rep_iter_inicio(&it, g, v);
-    while (rep_iter_proximo(&it, &destino)) {
+    while (rep_iter_proximo(&it, &destino, NULL)) {
         assert(destino >= 0 && destino < N_BRINQUEDO);
         visto[destino] = 1;
         passos++;
@@ -37,8 +38,47 @@ static int coletar_vizinhos(const RepGrafo *g, int v, int visto[N_BRINQUEDO]) {
     return passos;
 }
 
+static void testar_pesos_e_diferenciacao(TipoRepr tipo) {
+    printf("Testando pesos (negativo, zero, positivo) na representação '%s'...\n", rep_tipo_nome(tipo));
+
+    RepGrafo *g = rep_criar(tipo, 4);
+    assert(g != NULL);
+
+    /* Inserção de peso negativo, peso zero e peso positivo */
+    assert(rep_inserir_aresta(g, 0, 1, -1.5));
+    assert(rep_inserir_aresta(g, 1, 2, 0.0)); // Peso ZERO
+    assert(rep_inserir_aresta(g, 2, 3, 2.75));
+
+    /* 1. Diferenciação de Peso Zero vs Ausência de Aresta */
+    assert(rep_existe_aresta(g, 1, 2) == 1);
+    double peso = -999.0;
+    assert(rep_obter_peso(g, 1, 2, &peso) == 1);
+    assert(fabs(peso - 0.0) < 1e-6);
+
+    assert(rep_existe_aresta(g, 3, 0) == 0); // Aresta inexistente
+    assert(rep_obter_peso(g, 3, 0, &peso) == 0);
+
+    /* 2. Peso Negativo e Positivo */
+    assert(rep_obter_peso(g, 0, 1, &peso) == 1);
+    assert(fabs(peso - (-1.5)) < 1e-6);
+
+    assert(rep_obter_peso(g, 2, 3, &peso) == 1);
+    assert(fabs(peso - 2.75) < 1e-6);
+
+    /* 3. Iterador lendo destinos e pesos */
+    IteradorVizinhos it;
+    rep_iter_inicio(&it, g, 0);
+    int dest;
+    double w;
+    assert(rep_iter_proximo(&it, &dest, &w) == 1);
+    assert(dest == 1);
+    assert(fabs(w - (-1.5)) < 1e-6);
+
+    rep_liberar(g);
+}
+
 /* O mesmo conjunto de testes roda nas duas representações: é exatamente
- * isso que a abstração promete aos algoritmos. */
+- isso que a abstração promete aos algoritmos. */
 static void testar_representacao(TipoRepr tipo) {
     printf("Testando representação '%s'...\n", rep_tipo_nome(tipo));
 
@@ -77,8 +117,9 @@ static void testar_representacao(TipoRepr tipo) {
 
     IteradorVizinhos it;
     int d;
+    double w;
     rep_iter_inicio(&it, g, 99);
-    assert(!rep_iter_proximo(&it, &d));
+    assert(!rep_iter_proximo(&it, &d, &w));
 
     rep_liberar(g);
 }
@@ -104,8 +145,13 @@ static void testar_criacao_invalida(void) {
 int main(void) {
     testar_selecao_por_texto();
     testar_criacao_invalida();
+    
     testar_representacao(REPR_LISTA);
     testar_representacao(REPR_MATRIZ);
-    printf("Camada de abstração validada com sucesso!\n");
+
+    testar_pesos_e_diferenciacao(REPR_LISTA);
+    testar_pesos_e_diferenciacao(REPR_MATRIZ);
+
+    printf("Camada de abstração e grafos ponderados validados com sucesso!\n");
     return 0;
 }

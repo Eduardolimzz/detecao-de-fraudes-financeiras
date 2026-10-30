@@ -44,7 +44,7 @@ void testar_comparacao_com_lista_adjacencia(void) {
         double valor = (double)(rand() % 1000) + 1.0;
 
         grafo_inserir_aresta(lista, u, v, valor);
-        matriz_grafo_inserir_aresta(matriz, u, v);
+        matriz_grafo_inserir_aresta(matriz, u, v, 1.0);
     }
 
  
