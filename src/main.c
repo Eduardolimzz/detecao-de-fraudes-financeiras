@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "bellman_ford.h"
 #include "bench.h"
 #include "carregador.h"
 #include "cli.h"
@@ -8,7 +9,7 @@
 #include "validacao_lavagem.h"
 
 #define PROJECT_NAME "Detecção de Fraudes Financeiras em Grafos"
-#define PROJECT_VERSION "0.5.0"
+#define PROJECT_VERSION "0.6.0"
 
 /* Imprime o caminho do ciclo fechando de volta no primeiro vértice:
  * "A -> B -> C -> A" (auto-laço: "A -> A"). Sem quebra de linha. */
@@ -113,6 +114,62 @@ static void executar_deteccao_ciclos(const GrafoCarregado *carga, TipoRepr repr,
     deteccao_ciclos_liberar(ciclos);
 }
 
+/* Cada célula da matriz ponderada guarda peso (double) e presença (1 byte).
+ * Acima deste limite o Bellman-Ford em matriz é pulado, em vez de tentar
+ * alocar vários GB (o grafo de estados do dataset completo tem ~33 mil
+ * vértices, o que exigiria ~9,6 GB). */
+#define BF_LIMITE_BYTES_MATRIZ ((size_t)2 << 30)
+
+/* Etapa 6 (Fase II): Bellman-Ford sobre o grafo de estados banco:conta:moeda,
+ * na mesma representação (lista ou matriz) escolhida em --repr. Como a
+ * detecção de ciclos, é um extra sobre a carga: falhas são avisadas, mas
+ * não abortam o programa. */
+static void executar_bellman_ford(const GrafoCarregado *carga, TipoRepr repr) {
+    int n = carga->n_vertices_estado;
+    int m = carga->n_arestas_bf;
+
+    if (n <= 0 || m <= 0) {
+        printf("\nBellman-Ford: nenhuma transação com valores válidos para ponderar.\n");
+        return;
+    }
+
+    size_t bytes_matriz = (size_t)n * (size_t)n * (sizeof(double) + sizeof(unsigned char));
+    if (repr == REPR_MATRIZ && bytes_matriz > BF_LIMITE_BYTES_MATRIZ) {
+        printf("\nBellman-Ford: pulado. A matriz de %d estados exigiria %.1f GB; "
+               "use --repr=lista ou um dataset menor.\n",
+               n, (double)bytes_matriz / (1024.0 * 1024.0 * 1024.0));
+        return;
+    }
+
+    RepGrafo *grafo = bellman_ford_construir_grafo(repr, n, carga->arestas_bf, m);
+    if (grafo == NULL) {
+        fprintf(stderr, "Erro: não foi possível montar o grafo de estados (%s).\n",
+                rep_tipo_nome(repr));
+        return;
+    }
+
+    Cronometro cron;
+    bench_cronometro_iniciar(&cron);
+    ResultadoBellmanFord *res =
+        bellman_ford_executar_rep(grafo, carga->rotulos_estado, BF_TOLERANCIA_PADRAO);
+    double tempo_ms = bench_cronometro_ms(&cron);
+
+    if (res == NULL) {
+        fprintf(stderr, "Erro: falta de memória ao executar Bellman-Ford.\n");
+        rep_liberar(grafo);
+        return;
+    }
+
+    bellman_ford_anotar_transacoes(res, carga->arestas_bf, m);
+    bellman_ford_imprimir_resultado(res, n, m);
+    printf("  Tempo de execução: %.3f ms\n", tempo_ms);
+
+    bench_registrar_log("bellman_ford", rep_tipo_nome(repr), n, m, tempo_ms);
+
+    bellman_ford_liberar(res);
+    rep_liberar(grafo);
+}
+
 int main(int argc, char **argv) {
     Opcoes op;
     cli_opcoes_padrao(&op);
@@ -149,6 +206,7 @@ int main(int argc, char **argv) {
                         carga.n_arestas, carga.tempo_ms);
 
     executar_deteccao_ciclos(&carga, op.repr, op.dataset, op.mostrar_ciclos);
+    executar_bellman_ford(&carga, op.repr);
 
     carregador_liberar(&carga);
     return 0;
