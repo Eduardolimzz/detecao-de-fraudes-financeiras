@@ -126,6 +126,8 @@ static StatusCarga primeira_passada(const char *caminho, LabelMap *rotulos_top, 
             arestas_bf[n_bf].origem = orig_est;
             arestas_bf[n_bf].destino = dest_est;
             arestas_bf[n_bf].peso = peso_w;
+            /* ordem da transação válida no CSV (1 = primeira linha de dados) */
+            arestas_bf[n_bf].id_transacao = arestas_top->tamanho + 1;
             n_bf++;
         }
 

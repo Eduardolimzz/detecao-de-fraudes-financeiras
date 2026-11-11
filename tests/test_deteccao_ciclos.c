@@ -108,11 +108,11 @@ static void testar_bellman_ford_com_ciclo_negativo(void) {
 
     ArestaPonderada arestas[3];
     /* Transação 1: Paid=100 USD, Rec=100 EUR -> w1 = 0.0 */
-    arestas[0] = (ArestaPonderada){u, v, calcular_peso_transacao(100.0, 100.0)};
+    arestas[0] = (ArestaPonderada){u, v, calcular_peso_transacao(100.0, 100.0), 1};
     /* Transação 2: Paid=100 EUR, Rec=600 BRL -> w2 = -1.7918 */
-    arestas[1] = (ArestaPonderada){v, z, calcular_peso_transacao(100.0, 600.0)};
+    arestas[1] = (ArestaPonderada){v, z, calcular_peso_transacao(100.0, 600.0), 2};
     /* Transação 3: Paid=600 BRL, Rec=120 USD -> w3 = 1.6094 */
-    arestas[2] = (ArestaPonderada){z, u, calcular_peso_transacao(600.0, 120.0)};
+    arestas[2] = (ArestaPonderada){z, u, calcular_peso_transacao(600.0, 120.0), 3};
 
     ResultadoBellmanFord *res = bellman_ford_executar(3, arestas, 3, mapa);
     assert(res != NULL);
@@ -135,11 +135,11 @@ static void testar_bellman_ford_sem_ciclo_negativo(void) {
 
     ArestaPonderada arestas[3];
     /* Transação 1: Paid=100 USD, Rec=90 EUR -> w1 = 0.1054 */
-    arestas[0] = (ArestaPonderada){u, v, calcular_peso_transacao(100.0, 90.0)};
+    arestas[0] = (ArestaPonderada){u, v, calcular_peso_transacao(100.0, 90.0), 1};
     /* Transação 2: Paid=90 EUR, Rec=500 BRL -> w2 = -1.7147 */
-    arestas[1] = (ArestaPonderada){v, z, calcular_peso_transacao(90.0, 500.0)};
+    arestas[1] = (ArestaPonderada){v, z, calcular_peso_transacao(90.0, 500.0), 2};
     /* Transação 3: Paid=500 BRL, Rec=95 USD -> w3 = 1.6607 */
-    arestas[2] = (ArestaPonderada){z, u, calcular_peso_transacao(500.0, 95.0)};
+    arestas[2] = (ArestaPonderada){z, u, calcular_peso_transacao(500.0, 95.0), 3};
 
     ResultadoBellmanFord *res = bellman_ford_executar(3, arestas, 3, mapa);
     assert(res != NULL);
