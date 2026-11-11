@@ -120,6 +120,30 @@ de bytes alocados (`mem_*`) é impresso no sumário e é o número a comparar
 entre lista e matriz: o RSS subestima a matriz, pois o sistema operacional
 só materializa as páginas que foram tocadas.
 
+## Fase II: Bellman-Ford e ciclos negativos
+
+Depois da carga e da detecção de ciclos, o programa roda o Bellman-Ford sobre o
+grafo de **estados** `banco:conta:moeda`, na representação escolhida em
+`--repr`. Cada transação é uma aresta com peso `w = -ln(recebido/pago)`; um
+ciclo de peso total negativo é um **candidato a arbitragem** (produto das taxas
+maior que 1). O resultado não classifica nada como fraude.
+
+```bash
+./build/grafos                                                  # dataset oficial
+./build/grafos --dataset=tests/fixtures/arbitragem_brinquedo.csv   # ciclo negativo de exemplo
+./build/test_bellman_ford                                       # após make test
+```
+
+- Com o dataset oficial: 32.709 estados, 20.000 arestas ponderadas e **nenhum
+  ciclo negativo** (convergência em 3 passadas).
+- Quando há ciclo, a saída mostra cada estado, a transação (`#` = ordem no CSV),
+  o peso, a taxa e o peso total. Complexidade: `O(|V| x |E|)`.
+- Tolerância numérica de `1e-9`: ciclos com peso total entre `-1e-9` e `0` são
+  tratados como ruído de ponto flutuante.
+- Na matriz, o Bellman-Ford é pulado se a matriz de estados exigir mais de 2 GB.
+- Modelagem, limitações e resultados em
+  [docs/adr/0004-modelagem-ponderada-bellman-ford.md](docs/adr/0004-modelagem-ponderada-bellman-ford.md).
+
 ## Estrutura de diretórios
 
 ```
@@ -175,7 +199,7 @@ test(dfs): adiciona grafo-brinquedo com ciclo conhecido
 - [x] Validação com grafos-brinquedo
 
 ### Fase II
-- [ ] Implementação de Bellman-Ford
+- [x] Implementação de Bellman-Ford
 - [ ] Investigação de Caminho Hamiltoniano
 - [ ] Benchmarks e relatório de resultados
 - [ ] Artigo final (formato SBC)
