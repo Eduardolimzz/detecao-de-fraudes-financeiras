@@ -3,9 +3,11 @@
 #include "mem_track.h"
 
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 
 #define FIXTURE_BRINQUEDO "tests/fixtures/transacoes_brinquedo.csv"
+#define FIXTURE_ARBITRAGEM "tests/fixtures/arbitragem_brinquedo.csv"
 #define FIXTURE_SO_CABECALHO "tests/fixtures/so_cabecalho.csv"
 #define DATASET "data/dataset.csv"
 
@@ -74,7 +76,45 @@ static void testar_dataset_real(void) {
     assert(c.n_vertices == 32386);
     assert(c.n_arestas == 20000);
     assert(c.linhas_ignoradas == 0);
+    /* Fase II: todas as 20.000 transações têm valores positivos e viram
+     * arestas ponderadas entre 32.709 estados banco:conta:moeda. */
+    assert(c.n_vertices_estado == 32709);
+    assert(c.n_arestas_bf == 20000);
     carregador_imprimir_sumario(&c, REPR_LISTA);
+
+    carregador_liberar(&c);
+    assert(mem_bytes_atuais() == base);
+}
+
+/* Regressão: as colunas de valor e moeda eram lidas nos índices errados
+ * (Amount Received como moeda, Payment Format como valor) e nenhuma aresta
+ * ponderada era gerada. A fixture tem uma arbitragem USD -> EUR -> BRL -> USD. */
+static void testar_estados_e_pesos(void) {
+    printf("Carregando fixture de arbitragem (estados e pesos)...\n");
+    size_t base = mem_bytes_atuais();
+
+    GrafoCarregado c;
+    assert(carregador_carregar(FIXTURE_ARBITRAGEM, REPR_LISTA, 0, &c) == CARGA_OK);
+
+    assert(c.n_vertices == 4);        /* contas: AAA, BBB, CCC, DDD */
+    assert(c.n_vertices_estado == 4); /* AAA:USD, BBB:EUR, CCC:BRL, DDD:EUR */
+    assert(c.n_arestas_bf == 4);
+
+    /* estado de origem usa Payment Currency; o de destino, Receiving Currency */
+    int a_usd = label_map_obter_indice(c.rotulos_estado, "001:AAA:USD");
+    int b_eur = label_map_obter_indice(c.rotulos_estado, "002:BBB:EUR");
+    int c_brl = label_map_obter_indice(c.rotulos_estado, "003:CCC:BRL");
+    assert(a_usd >= 0 && b_eur >= 0 && c_brl >= 0);
+
+    /* tx1: pagou 100 USD, recebeu 100 EUR => r = 1 => w = 0 */
+    assert(c.arestas_bf[0].origem == a_usd && c.arestas_bf[0].destino == b_eur);
+    assert(fabs(c.arestas_bf[0].peso) < 1e-12);
+    /* tx2: pagou 100 EUR, recebeu 600 BRL => r = 6 => w = -ln(6) */
+    assert(c.arestas_bf[1].origem == b_eur && c.arestas_bf[1].destino == c_brl);
+    assert(fabs(c.arestas_bf[1].peso - (-log(6.0))) < 1e-12);
+    /* tx3: pagou 600 BRL, recebeu 120 USD => r = 0,2 => w = -ln(0,2) */
+    assert(c.arestas_bf[2].origem == c_brl && c.arestas_bf[2].destino == a_usd);
+    assert(fabs(c.arestas_bf[2].peso - (-log(0.2))) < 1e-12);
 
     carregador_liberar(&c);
     assert(mem_bytes_atuais() == base);
@@ -84,6 +124,7 @@ int main(void) {
     testar_fixture(REPR_LISTA);
     testar_fixture(REPR_MATRIZ);
     testar_erros();
+    testar_estados_e_pesos();
     testar_dataset_real();
     printf("Pipeline de carga validado com sucesso!\n");
     return 0;

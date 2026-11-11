@@ -7,15 +7,18 @@
 #include "label_map.h"
 #include "representacao.h"
 
-/* Posições das colunas no dataset do projeto */
+/* Posições das colunas no dataset do projeto (cabeçalho do CSV):
+ * 0 Timestamp, 1 From Bank, 2 Account, 3 To Bank, 4 Account.1,
+ * 5 Amount Received, 6 Receiving Currency, 7 Amount Paid,
+ * 8 Payment Currency, 9 Payment Format, 10 Is Laundering */
 #define COL_BANCO_ORIGEM 1
 #define COL_CONTA_ORIGEM 2
 #define COL_BANCO_DESTINO 3
 #define COL_CONTA_DESTINO 4
-#define COL_MOEDA_PAGA 5
+#define COL_VALOR_RECEBIDO 5
+#define COL_MOEDA_RECEBIDA 6
 #define COL_VALOR_PAGO 7
-#define COL_MOEDA_RECEBIDA 8
-#define COL_VALOR_RECEBIDO 9
+#define COL_MOEDA_PAGA 8
 #define COL_IS_LAUNDERING 10
 #define NUM_COLUNAS_MINIMO 11
 
