@@ -47,7 +47,7 @@ static ResultadoBellmanFord *executar_em(TipoRepr tipo, int n, const ArestaPonde
     return res;
 }
 
-/* ---------- 1. ciclo negativo ---------- */
+/* Caso 1: ciclo negativo */
 static void testar_ciclo_negativo(void) {
     printf("Caso 1: ciclo negativo (arbitragem USD -> EUR -> BRL -> USD)...\n");
 
@@ -97,7 +97,7 @@ static void testar_ciclo_negativo(void) {
     label_map_destruir(mapa);
 }
 
-/* ---------- 2. nenhum ciclo negativo ---------- */
+/* Caso 2: nenhum ciclo negativo */
 static void testar_sem_ciclo_negativo(void) {
     printf("Caso 2: ciclo com produto de taxas < 1 (nenhum ciclo negativo)...\n");
 
@@ -123,7 +123,7 @@ static void testar_sem_ciclo_negativo(void) {
     }
 }
 
-/* ---------- 3. ciclo negativo desconectado ---------- */
+/* Caso 3: ciclo negativo desconectado */
 static void testar_ciclo_desconectado(void) {
     printf("Caso 3: ciclo negativo em componente desconectado...\n");
 
@@ -155,7 +155,7 @@ static void testar_ciclo_desconectado(void) {
     }
 }
 
-/* ---------- 4. aresta negativa sem ciclo negativo ---------- */
+/* Caso 4: aresta negativa sem ciclo negativo */
 static void testar_aresta_negativa_sem_ciclo(void) {
     printf("Caso 4: arestas negativas sem ciclo negativo...\n");
 
@@ -184,7 +184,7 @@ static void testar_aresta_negativa_sem_ciclo(void) {
     }
 }
 
-/* ---------- 5. laço negativo ---------- */
+/* Caso 5: laço negativo */
 static void testar_laco_negativo(void) {
     printf("Caso 5: laço (auto-aresta) negativo...\n");
 
@@ -228,7 +228,7 @@ static void testar_laco_negativo(void) {
     bellman_ford_liberar(res);
 }
 
-/* ---------- tolerância de ponto flutuante ---------- */
+/* Tolerância de ponto flutuante */
 static void testar_tolerancia(void) {
     printf("Tolerância: ruído de ponto flutuante não vira ciclo negativo...\n");
 
@@ -271,7 +271,7 @@ static void testar_tolerancia(void) {
     bellman_ford_liberar(res);
 }
 
-/* ---------- arestas paralelas ---------- */
+/* Arestas paralelas */
 static void testar_arestas_paralelas(void) {
     printf("Arestas paralelas: vale a de menor peso nas duas representações...\n");
 
@@ -294,7 +294,7 @@ static void testar_arestas_paralelas(void) {
     }
 }
 
-/* ---------- argumentos inválidos ---------- */
+/* Argumentos inválidos */
 static void testar_argumentos_invalidos(void) {
     printf("Argumentos inválidos retornam NULL...\n");
 

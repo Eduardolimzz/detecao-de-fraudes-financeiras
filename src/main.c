@@ -114,16 +114,12 @@ static void executar_deteccao_ciclos(const GrafoCarregado *carga, TipoRepr repr,
     deteccao_ciclos_liberar(ciclos);
 }
 
-/* Cada célula da matriz ponderada guarda peso (double) e presença (1 byte).
- * Acima deste limite o Bellman-Ford em matriz é pulado, em vez de tentar
- * alocar vários GB (o grafo de estados do dataset completo tem ~33 mil
- * vértices, o que exigiria ~9,6 GB). */
+/* Acima deste tamanho a matriz de estados não é criada (cada célula usa
+ * 9 bytes; o dataset completo exigiria ~9,6 GB). */
 #define BF_LIMITE_BYTES_MATRIZ ((size_t)2 << 30)
 
-/* Etapa 6 (Fase II): Bellman-Ford sobre o grafo de estados banco:conta:moeda,
- * na mesma representação (lista ou matriz) escolhida em --repr. Como a
- * detecção de ciclos, é um extra sobre a carga: falhas são avisadas, mas
- * não abortam o programa. */
+/* Etapa 6 (Fase II): Bellman-Ford sobre o grafo de estados, na representação
+ * escolhida em --repr. Não aborta o programa em caso de erro. */
 static void executar_bellman_ford(const GrafoCarregado *carga, TipoRepr repr) {
     int n = carga->n_vertices_estado;
     int m = carga->n_arestas_bf;

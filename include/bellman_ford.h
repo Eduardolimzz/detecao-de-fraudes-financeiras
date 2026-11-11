@@ -6,25 +6,16 @@
 #include <math.h>
 
 /*
- * Bellman-Ford para detectar ciclos de peso negativo (Fase II).
+ * Bellman-Ford para ciclos de peso negativo (Fase II). Modelagem em
+ * docs/adr/0004-modelagem-ponderada-bellman-ford.md.
  *
- * Modelagem (docs/adr/0004-modelagem-ponderada-bellman-ford.md):
- *  - vértice = estado "banco:conta:moeda";
- *  - cada transação é uma aresta do estado (origem, moeda paga) para o
- *    estado (destino, moeda recebida), com peso w = -ln(r) e
- *    r = valor recebido / valor pago;
- *  - um ciclo de peso total negativo equivale a um produto de taxas
- *    maior que 1, isto é, uma CANDIDATA a arbitragem. O algoritmo não
- *    classifica nada como fraude.
- *
- * Complexidade: O(|V| x |E|) no pior caso (|V| passadas sobre as |E|
- * arestas). Com parada antecipada, o grafo sem ciclo negativo costuma
- * convergir em poucas passadas; o número real fica em iteracoes.
+ * O vértice é o estado "banco:conta:moeda" e cada transação é uma aresta com
+ * peso w = -ln(recebido / pago). Um ciclo de peso total negativo tem produto
+ * de taxas maior que 1: é um CANDIDATO a arbitragem, não uma classificação
+ * de fraude. Complexidade: O(|V| x |E|) no pior caso.
  */
 
-/* Pesos são somas de logaritmos em ponto flutuante. Um ciclo só é
- * negativo se seu peso total for menor que -tolerancia; valores entre
- * -tolerancia e 0 são tratados como ruído de arredondamento. */
+/* Ciclos com peso total entre -tolerancia e 0 são ruído de ponto flutuante. */
 #define BF_TOLERANCIA_PADRAO 1e-9
 
 /* Aresta ponderada entre estados (um registro por transação). */
@@ -71,14 +62,10 @@ static inline double calcular_peso_transacao(double amount_paid, double amount_r
     return -log(r);
 }
 
-/**
- * Executa Bellman-Ford sobre um vetor de arestas, com BF_TOLERANCIA_PADRAO.
- * Todos os vértices começam com distância 0 (equivale a uma fonte virtual
- * ligada a todos), então ciclos negativos são encontrados em qualquer
- * componente, alcançável ou não a partir de um vértice específico.
- * rotulos_estado pode ser NULL. Retorna NULL em caso de falta de memória
- * ou argumentos inválidos.
- */
+/* Executa Bellman-Ford sobre um vetor de arestas, com BF_TOLERANCIA_PADRAO.
+ * Acha ciclos negativos em qualquer componente, alcançável ou não.
+ * rotulos_estado pode ser NULL. Retorna NULL em argumentos inválidos ou
+ * falta de memória. */
 ResultadoBellmanFord *bellman_ford_executar(int num_vertices,
                                             const ArestaPonderada *arestas,
                                             int num_arestas,
@@ -91,39 +78,27 @@ ResultadoBellmanFord *bellman_ford_executar_tol(int num_vertices,
                                                 const LabelMap *rotulos_estado,
                                                 double tolerancia);
 
-/**
- * Executa Bellman-Ford sobre um grafo ponderado já construído em lista ou
- * matriz (RepGrafo), usando a interface de iteração da camada de
- * abstração. Na matriz, transações paralelas já foram reduzidas à de menor
- * peso, o que não altera a existência de ciclo negativo. As transações do
- * ciclo ficam com id 0 até bellman_ford_anotar_transacoes.
- */
+/* Executa Bellman-Ford sobre um RepGrafo (lista ou matriz). Na matriz as
+ * paralelas já foram reduzidas à de menor peso, o que não muda o resultado.
+ * Os ids das transações ficam 0 até bellman_ford_anotar_transacoes. */
 ResultadoBellmanFord *bellman_ford_executar_rep(const RepGrafo *g,
                                                 const LabelMap *rotulos_estado,
                                                 double tolerancia);
 
-/**
- * Preenche id_transacoes do ciclo procurando, em 'arestas', a transação
- * de mesma origem, destino e peso de cada passo. Útil depois de
- * bellman_ford_executar_rep, que não carrega ids.
- */
+/* Preenche id_transacoes buscando em 'arestas' a transação de mesma origem,
+ * destino e peso de cada passo do ciclo. */
 void bellman_ford_anotar_transacoes(ResultadoBellmanFord *res,
                                     const ArestaPonderada *arestas,
                                     int num_arestas);
 
-/**
- * Cria um RepGrafo de estados (lista ou matriz) a partir das arestas
- * ponderadas. Retorna NULL se a representação não comportar o grafo.
- */
+/* Cria um RepGrafo de estados a partir das arestas ponderadas. Retorna NULL
+ * se a representação não comportar o grafo. */
 RepGrafo *bellman_ford_construir_grafo(TipoRepr tipo, int num_vertices,
                                        const ArestaPonderada *arestas,
                                        int num_arestas);
 
-/**
- * Imprime o resultado: complexidade, passadas executadas e, se houver, o
- * ciclo candidato com cada estado, transação, peso e taxa. Deixa claro que
- * é um candidato segundo a modelagem, não uma classificação de fraude.
- */
+/* Imprime complexidade, passadas e, se houver, o ciclo candidato com cada
+ * estado, transação, peso e taxa. */
 void bellman_ford_imprimir_resultado(const ResultadoBellmanFord *res,
                                      int num_vertices, int num_arestas);
 

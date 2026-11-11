@@ -25,10 +25,8 @@ static int arestas_validas(int num_vertices, const ArestaPonderada *arestas, int
 }
 
 /* Reconstrói o ciclo a partir de 'ultimo', o último vértice relaxado na
- * n-ésima passada. Andar n passos pelos predecessores garante estar dentro
- * de um ciclo do grafo de predecessores. Devolve 1 e preenche *saida se o
- * ciclo existe e tem peso total menor que -tolerancia; devolve 0 se for só
- * ruído numérico; devolve -1 se faltar memória. */
+ * n-ésima passada. Devolve 1 e preenche *saida se o peso total for menor
+ * que -tolerancia, 0 se for ruído numérico e -1 se faltar memória. */
 static int reconstruir_ciclo(int num_vertices, const ArestaPonderada *arestas,
                              const int *pred_aresta, int ultimo,
                              const LabelMap *rotulos_estado, double tolerancia,
